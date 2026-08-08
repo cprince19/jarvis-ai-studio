@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.routes.agents import router as agents_router
 from app.api.routes.ai import router as ai_router
 from app.api.routes.auth import router as auth_router
+from app.api.routes.conversations import router as conversations_router
 from app.api.routes.users import router as users_router
 from app.api.routes.workflows import router as workflows_router
 
@@ -17,6 +18,7 @@ app.include_router(users_router, prefix="/api/v1")
 app.include_router(agents_router, prefix="/api/v1")
 app.include_router(workflows_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(conversations_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])
