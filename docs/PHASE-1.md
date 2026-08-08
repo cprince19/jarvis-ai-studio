@@ -3,20 +3,33 @@
 ## Completed
 
 - Repository initialized
-- Backend FastAPI application created
-- `/health` and `/` endpoints added
-- Environment configuration added
-- PostgreSQL and Redis local services added with Docker Compose
-- React + Vite + TypeScript frontend shell created
-- Initial project README and `.gitignore` added
+- FastAPI backend with health endpoint
+- Versioned API under `/api/v1`
+- PostgreSQL SQLAlchemy foundation
+- User model
+- Password hashing and JWT access tokens
+- Register and login endpoints
+- Authenticated `/api/v1/users/me` endpoint
+- React + Vite + TypeScript frontend shell
+- Frontend API client foundation
+- Backend and frontend Dockerfiles
+- Full local Docker Compose stack
+- GitHub Actions CI for backend tests and frontend build
+
+## API endpoints
+
+- `GET /health`
+- `GET /`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/users/me` (Bearer token required)
 
 ## Next milestones
 
-1. Backend database layer and migrations
-2. User model and JWT authentication
-3. API versioning and error handling
-4. Frontend dashboard layout
-5. Frontend-to-backend API integration
-6. Dockerized application services
-7. GitHub Actions CI
-8. Automated tests
+1. Add Alembic migrations
+2. Add refresh-token/session management
+3. Build production dashboard and authentication screens
+4. Add AI provider abstraction
+5. Add agent/workflow data models
+6. Add Redis/Celery task processing
+7. Add YouTube integration foundation
