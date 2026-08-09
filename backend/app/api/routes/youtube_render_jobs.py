@@ -12,6 +12,7 @@ from app.models.user import User
 from app.tasks.render_video import render_video
 
 router = APIRouter(prefix="/youtube/render-jobs", tags=["youtube-render-jobs"])
+RENDER_DIR = Path("/app/media/renders")
 
 
 class RenderJobRequest(BaseModel):
@@ -28,8 +29,18 @@ def create_render_job(payload: RenderJobRequest, _: User = Depends(get_current_u
         db.refresh(job)
         job_id = str(job.id)
 
-    output_path = str(Path("/tmp/jarvis-renders") / payload.output_name)
-    task = render_video.delay(job_id, payload.timeline, output_path)
+    output_path = str(RENDER_DIR / payload.output_name)
+    try:
+        task = render_video.delay(job_id, payload.timeline, output_path)
+    except Exception as exc:
+        with SessionLocal() as db:
+            job = db.scalar(select(RenderJob).where(RenderJob.id == UUID(job_id)))
+            if job is not None:
+                job.status = RenderJobStatus.FAILED.value
+                job.progress = 100
+                job.error = f"Unable to queue render task: {exc}"
+                db.commit()
+        raise HTTPException(status_code=503, detail="Unable to queue render job") from exc
 
     with SessionLocal() as db:
         job = db.scalar(select(RenderJob).where(RenderJob.id == UUID(job_id)))
