@@ -16,6 +16,7 @@ from app.api.routes.youtube_voice import router as youtube_voice_router
 from app.api.routes.youtube_timeline import router as youtube_timeline_router
 from app.api.routes.youtube_render import router as youtube_render_router
 from app.api.routes.youtube_subtitles import router as youtube_subtitles_router
+from app.api.routes.youtube_render_jobs import router as youtube_render_jobs_router
 
 app = FastAPI(title="Jarvis AI Studio API", version="0.1.0", description="Foundation API for Jarvis AI Studio.")
 
@@ -35,6 +36,7 @@ app.include_router(youtube_voice_router, prefix="/api/v1")
 app.include_router(youtube_timeline_router, prefix="/api/v1")
 app.include_router(youtube_render_router, prefix="/api/v1")
 app.include_router(youtube_subtitles_router, prefix="/api/v1")
+app.include_router(youtube_render_jobs_router, prefix="/api/v1")
 
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
