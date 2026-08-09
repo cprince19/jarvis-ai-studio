@@ -8,8 +8,8 @@ from sqlalchemy import select
 from app.core.dependencies import get_current_user
 from app.db.session import SessionLocal
 from app.models.render_job import RenderJob, RenderJobStatus
-from app.tasks.render_video import render_video
 from app.models.user import User
+from app.tasks.render_video import render_video
 
 router = APIRouter(prefix="/youtube/render-jobs", tags=["youtube-render-jobs"])
 
@@ -29,8 +29,20 @@ def create_render_job(payload: RenderJobRequest, _: User = Depends(get_current_u
         job_id = str(job.id)
 
     output_path = str(Path("/tmp/jarvis-renders") / payload.output_name)
-    render_video.delay(job_id, payload.timeline, output_path)
-    return {"job_id": job_id, "status": RenderJobStatus.QUEUED.value, "progress": 0}
+    task = render_video.delay(job_id, payload.timeline, output_path)
+
+    with SessionLocal() as db:
+        job = db.scalar(select(RenderJob).where(RenderJob.id == UUID(job_id)))
+        if job is not None:
+            job.celery_task_id = task.id
+            db.commit()
+
+    return {
+        "job_id": job_id,
+        "celery_task_id": task.id,
+        "status": RenderJobStatus.QUEUED.value,
+        "progress": 0,
+    }
 
 
 @router.get("/{job_id}")
@@ -43,4 +55,14 @@ def get_render_job(job_id: str, _: User = Depends(get_current_user)):
         job = db.scalar(select(RenderJob).where(RenderJob.id == parsed_id))
         if job is None:
             raise HTTPException(status_code=404, detail="Render job not found")
-        return {"job_id": str(job.id), "status": job.status, "progress": job.progress, "output_path": job.output_path, "error": job.error}
+        return {
+            "job_id": str(job.id),
+            "celery_task_id": job.celery_task_id,
+            "status": job.status,
+            "progress": job.progress,
+            "output_path": job.output_path,
+            "error": job.error,
+            "created_at": job.created_at,
+            "started_at": job.started_at,
+            "completed_at": job.completed_at,
+        }
