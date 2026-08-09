@@ -22,13 +22,16 @@ class FFmpegRenderer:
     def render(self, clips: list[dict], output_path: str) -> RenderResult:
         if not clips:
             raise ValueError("Timeline cannot be empty")
-        if not self.available():
-            raise RuntimeError("FFmpeg is not installed or not available on PATH")
 
-        # Foundation renderer: generate a standards-compliant silent video timeline.
+        # Validate the timeline before checking external runtime dependencies so
+        # malformed jobs fail deterministically even on machines without FFmpeg.
         duration = sum(float(c.get("duration_seconds", 0)) for c in clips)
         if duration <= 0:
             raise ValueError("Timeline duration must be greater than zero")
+
+        if not self.available():
+            raise RuntimeError("FFmpeg is not installed or not available on PATH")
+
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         command = [
             self.ffmpeg_bin, "-y", "-f", "lavfi", "-i",
