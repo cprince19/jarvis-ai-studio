@@ -15,5 +15,38 @@ services:
     ports:
       - "6379:6379"
 
+  backend:
+    build:
+      context: ../backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://jarvis:jarvis@postgres:5432/jarvis
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change-me-in-production
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ../backend
+    command: celery -A app.worker.celery_app worker --loglevel=INFO
+    environment:
+      DATABASE_URL: postgresql+psycopg://jarvis:jarvis@postgres:5432/jarvis
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change-me-in-production
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build:
+      context: ../frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
 volumes:
   postgres_data:

@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://jarvis:jarvis@localhost:5432/jarvis"
     redis_url: str = "redis://localhost:6379/0"
     jwt_secret: str = "change-me-in-production"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-5-mini"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
