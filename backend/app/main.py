@@ -9,6 +9,7 @@ from app.api.routes.users import router as users_router
 from app.api.routes.workflows import router as workflows_router
 from app.api.routes.youtube import router as youtube_router
 from app.api.routes.youtube_projects import router as youtube_projects_router
+from app.api.routes.youtube_scenes import router as youtube_scenes_router
 
 app = FastAPI(title="Jarvis AI Studio API", version="0.1.0", description="Foundation API for Jarvis AI Studio.")
 
@@ -21,6 +22,7 @@ app.include_router(conversations_router, prefix="/api/v1")
 app.include_router(executions_router, prefix="/api/v1")
 app.include_router(youtube_router, prefix="/api/v1")
 app.include_router(youtube_projects_router, prefix="/api/v1")
+app.include_router(youtube_scenes_router, prefix="/api/v1")
 
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
