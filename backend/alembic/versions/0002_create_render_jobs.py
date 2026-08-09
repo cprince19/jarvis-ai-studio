@@ -1,15 +1,15 @@
 """create render_jobs table
 
-Revision ID: 0002_create_render_jobs
-Revises: 0001_initial
+Revision ID: 0001_render_jobs
+Revises: None
 """
 
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "0002_create_render_jobs"
-down_revision = "0001_initial"
+revision = "0001_render_jobs"
+down_revision = None
 branch_labels = None
 depends_on = None
 
