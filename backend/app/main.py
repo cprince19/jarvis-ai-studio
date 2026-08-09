@@ -5,6 +5,7 @@ from app.api.routes.ai import router as ai_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.conversations import router as conversations_router
 from app.api.routes.executions import router as executions_router
+from app.api.routes.system import router as system_router
 from app.api.routes.users import router as users_router
 from app.api.routes.workflows import router as workflows_router
 from app.api.routes.youtube import router as youtube_router
@@ -27,6 +28,7 @@ app.include_router(workflows_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
 app.include_router(conversations_router, prefix="/api/v1")
 app.include_router(executions_router, prefix="/api/v1")
+app.include_router(system_router, prefix="/api/v1")
 app.include_router(youtube_router, prefix="/api/v1")
 app.include_router(youtube_projects_router, prefix="/api/v1")
 app.include_router(youtube_scenes_router, prefix="/api/v1")
