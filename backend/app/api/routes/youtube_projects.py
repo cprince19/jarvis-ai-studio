@@ -45,6 +45,12 @@ def create_project(payload: ProjectRequest, user: User = Depends(get_current_use
     return {"project_id": project.id, "task_id": task.id, "status": project.status}
 
 
+@router.get("/tasks/{task_id}")
+def get_task(task_id: str, _: User = Depends(get_current_user)):
+    result = AsyncResult(task_id)
+    return {"task_id": task_id, "status": result.status, "result": result.result if result.successful() else None}
+
+
 @router.get("/{project_id}")
 def get_project(project_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     project = db.scalar(select(YouTubeProject).where(YouTubeProject.id == project_id, YouTubeProject.user_id == user.id))
@@ -63,9 +69,3 @@ def update_project(project_id: int, payload: ProjectUpdate, user: User = Depends
     db.commit()
     db.refresh(project)
     return project
-
-
-@router.get("/tasks/{task_id}")
-def get_task(task_id: str, _: User = Depends(get_current_user)):
-    result = AsyncResult(task_id)
-    return {"task_id": task_id, "status": result.status, "result": result.result if result.successful() else None}
