@@ -45,6 +45,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://jarvis:jarvis_dev@postgres:5432/jarvis
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      - render_media:/app/media
     ports:
       - "8000:8000"
     depends_on:
@@ -62,6 +64,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://jarvis:jarvis_dev@postgres:5432/jarvis
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      - render_media:/app/media
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -70,3 +74,4 @@ services:
 
 volumes:
   postgres_data:
+  render_media:
