@@ -1,5 +1,3 @@
-import json
-
 from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -24,6 +22,14 @@ class ProjectRequest(BaseModel):
     model: str | None = None
 
 
+class ProjectUpdate(BaseModel):
+    research: str | None = None
+    title: str | None = Field(default=None, max_length=500)
+    script: str | None = None
+    description: str | None = None
+    tags: str | None = None
+
+
 @router.get("")
 def list_projects(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.scalars(select(YouTubeProject).where(YouTubeProject.user_id == user.id).order_by(YouTubeProject.created_at.desc())).all()
@@ -44,6 +50,18 @@ def get_project(project_id: int, user: User = Depends(get_current_user), db: Ses
     project = db.scalar(select(YouTubeProject).where(YouTubeProject.id == project_id, YouTubeProject.user_id == user.id))
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
+@router.patch("/{project_id}")
+def update_project(project_id: int, payload: ProjectUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    project = db.scalar(select(YouTubeProject).where(YouTubeProject.id == project_id, YouTubeProject.user_id == user.id))
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(project, key, value)
+    db.commit()
+    db.refresh(project)
     return project
 
 
