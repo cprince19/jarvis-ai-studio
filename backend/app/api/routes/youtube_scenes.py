@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
@@ -17,4 +19,8 @@ class ScenePlanRequest(BaseModel):
 @router.post("/plan")
 async def plan_scenes(payload: ScenePlanRequest, _: User = Depends(get_current_user)):
     scenes = planner.plan(payload.script, payload.default_duration)
-    return {"scene_count": len(scenes), "total_duration_seconds": sum(s.duration_seconds for s in scenes), "scenes": [s.__dict__ for s in scenes]}
+    return {
+        "scene_count": len(scenes),
+        "total_duration_seconds": sum(s.duration_seconds for s in scenes),
+        "scenes": [asdict(scene) for scene in scenes],
+    }
