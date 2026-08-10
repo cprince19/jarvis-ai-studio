@@ -11,19 +11,23 @@ class TTSAdapterConfig:
 
 
 class TTSAdapter:
-    """Safe TTS boundary. Real providers can be added without changing orchestration."""
+    """Provider-neutral TTS boundary.
+
+    Only configured providers are allowed to generate audio. The default stub
+    returns metadata and never creates a fake audio file.
+    """
 
     def __init__(self, config: TTSAdapterConfig | None = None):
         self.config = config or TTSAdapterConfig()
 
     async def synthesize(self, request: VoiceRequest, scene_id: str) -> VoiceResult:
-        if not scene_id.strip():
+        scene_id = scene_id.strip()
+        text = request.text.strip()
+        if not scene_id:
             raise ValueError("Scene ID cannot be empty")
-        if not request.text.strip():
+        if not text:
             raise ValueError("Voice text cannot be empty")
-        destination = Path(self.config.output_dir)
-        destination.mkdir(parents=True, exist_ok=True)
-        # Do not create a fake audio file. The adapter returns a deterministic
-        # target path until a real TTS provider is configured.
-        path = destination / f"{scene_id}.wav"
-        return VoiceResult(audio_path=str(path), duration_seconds=max(1.0, len(request.text.split()) / 2.5))
+        if self.config.provider == "stub":
+            path = Path(self.config.output_dir) / f"{scene_id}.wav"
+            return VoiceResult(audio_path=str(path), duration_seconds=max(1.0, len(text.split()) / 2.5))
+        raise RuntimeError(f"TTS provider '{self.config.provider}' is not configured")
