@@ -22,13 +22,14 @@ class RenderManifest:
     total_duration_seconds: float
 
 
-def build_manifest(artifacts: list[ProductionArtifact]) -> RenderManifest:
+def build_manifest(artifacts: list[ProductionArtifact], subtitle_paths: dict[str, str] | None = None) -> RenderManifest:
+    subtitle_paths = subtitle_paths or {}
     scenes: list[RenderScene] = []
     for artifact in artifacts:
         audio_path = artifact.voice.audio_path
         media_path = artifact.media.url if artifact.media else ""
-        scenes.append(RenderScene(artifact.scene_id, artifact.title, artifact.duration_seconds, artifact.narration, audio_path, "", media_path))
-    return RenderManifest("1.0", scenes, sum(scene.duration_seconds for scene in scenes))
+        scenes.append(RenderScene(artifact.scene_id, artifact.title, artifact.duration_seconds, artifact.narration, audio_path, subtitle_paths.get(artifact.scene_id, ""), media_path))
+    return RenderManifest("1.1", scenes, sum(scene.duration_seconds for scene in scenes))
 
 
 def write_manifest(manifest: RenderManifest, path: str | Path) -> Path:
