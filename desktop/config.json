@@ -1,0 +1,9 @@
+{
+  "app_name": "JARVIS AI Studio",
+  "watch_folder": "watch/incoming",
+  "processing_folder": "watch/processing",
+  "completed_folder": "watch/completed",
+  "archive_folder": "archive",
+  "database": "data/jarvis.db",
+  "approval_required_for_upload": true
+}
