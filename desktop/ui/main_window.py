@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from pathlib import Path
+
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -10,18 +12,27 @@ from PySide6.QtWidgets import (
     QPushButton,
     QStackedWidget,
     QStatusBar,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
+from core.job import VideoJob
+from core.watcher import VideoFolderWatcher
+
 
 class MainWindow(QMainWindow):
-    def __init__(self, app_name: str = "JARVIS AI Studio"):
+    video_detected = Signal(object)
+
+    def __init__(self, app_name: str = "JARVIS AI Studio", incoming_folder: str | Path = "watch/incoming"):
         super().__init__()
         self.setWindowTitle(app_name)
         self.resize(1280, 780)
+        self.incoming_folder = Path(incoming_folder)
+        self.jobs: dict[str, VideoJob] = {}
         self._build_ui()
+        self.video_detected.connect(self._add_video_job)
+        self.watcher = VideoFolderWatcher(self.incoming_folder, self.video_detected.emit)
+        self.watcher.start()
 
     def _build_ui(self) -> None:
         root = QWidget()
@@ -64,8 +75,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(root)
 
         status = QStatusBar()
-        status.showMessage("JARVIS is ready — waiting for videos")
+        status.showMessage(f"JARVIS is ready — watching {self.incoming_folder}")
         self.setStatusBar(status)
+        self.status = status
 
     def _dashboard_page(self) -> QWidget:
         page = QWidget()
@@ -75,19 +87,31 @@ class MainWindow(QMainWindow):
         layout.addWidget(title)
 
         cards = QHBoxLayout()
-        for heading, value in (("Queued", "0"), ("Processing", "0"), ("Awaiting Approval", "0"), ("Uploaded", "0")):
+        self.queued_value = QLabel("0")
+        self.processing_value = QLabel("0")
+        self.approval_value = QLabel("0")
+        self.uploaded_value = QLabel("0")
+        for heading, value_label in (
+            ("Queued", self.queued_value),
+            ("Processing", self.processing_value),
+            ("Awaiting Approval", self.approval_value),
+            ("Uploaded", self.uploaded_value),
+        ):
             card = QFrame()
             card.setStyleSheet("QFrame { background:#172033; border:1px solid #263244; border-radius:12px; }")
             card_layout = QVBoxLayout(card)
             card_layout.addWidget(QLabel(heading))
-            value_label = QLabel(value)
             value_label.setStyleSheet("font-size: 26px; font-weight: 700;")
             card_layout.addWidget(value_label)
             cards.addWidget(card)
         layout.addLayout(cards)
         layout.addSpacing(20)
 
-        info = QLabel("Drop a video into the Incoming folder to begin. JARVIS will process it and stop at the upload approval gate.")
+        self.incoming_label = QLabel()
+        self.incoming_label.setWordWrap(True)
+        self.incoming_label.setText(f"Incoming folder: {self.incoming_folder.resolve()}")
+        layout.addWidget(self.incoming_label)
+        info = QLabel("JARVIS watches the Incoming folder for supported video files. Processing will stop at the explicit YouTube upload approval gate.")
         info.setWordWrap(True)
         layout.addWidget(info)
         layout.addStretch()
@@ -101,7 +125,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(title)
 
         self.queue = QListWidget()
-        self.queue.addItem("No videos queued")
         layout.addWidget(self.queue, 1)
 
         approval = QHBoxLayout()
@@ -125,3 +148,16 @@ class MainWindow(QMainWindow):
         layout.addWidget(QLabel("YouTube upload settings and AI configuration will be added in the next milestone."))
         layout.addStretch()
         return page
+
+    @Slot(object)
+    def _add_video_job(self, job: VideoJob) -> None:
+        if job.file_path in {existing.file_path for existing in self.jobs.values()}:
+            return
+        self.jobs[job.id] = job
+        self.queue.addItem(f"QUEUED  •  {job.filename}")
+        self.queued_value.setText(str(sum(item.status == "queued" for item in self.jobs.values())))
+        self.status.showMessage(f"Video queued: {job.filename}")
+
+    def closeEvent(self, event) -> None:  # noqa: N802
+        self.watcher.stop()
+        event.accept()
